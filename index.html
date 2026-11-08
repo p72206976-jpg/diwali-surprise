@@ -4,146 +4,249 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>60 Second Diwali Surprise</title>
+<title>Diwali Fireworks Surprise 🪔</title>
+
 <style>
-*{box-sizing:border-box}
-body{
- margin:0;min-height:100vh;background:#170923;
- color:#fff0ca;font-family:Georgia,serif;
- display:grid;place-items:center;overflow:hidden;
+* { box-sizing:border-box; }
+
+body {
+ margin:0;
+ min-height:100vh;
+ background:radial-gradient(circle at top,#64245d,#1a0b2c 65%,#080513);
+ color:#ffe7ad;
+ font-family:Georgia,serif;
+ text-align:center;
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ padding:20px;
+ overflow-x:hidden;
 }
-#sky{position:fixed;inset:0;width:100%;height:100%}
-.card{
- position:relative;z-index:2;width:92%;max-width:480px;
- min-height:480px;padding:30px 18px;
- display:flex;flex-direction:column;justify-content:center;
- align-items:center;text-align:center;
- background:linear-gradient(145deg,#41134eeb,#180c2aee);
- border:2px solid #e9bd65;border-radius:25px;
- box-shadow:0 0 45px #f9b74355;
+
+.card {
+ width:100%;
+ max-width:480px;
+ padding:30px 18px;
+ border:2px solid #e8bb65;
+ border-radius:25px;
+ background:#29113bee;
+ box-shadow:0 0 35px #ffbd5055;
+ position:relative;
+ z-index:2;
 }
-h1{color:#ffdc83;font-size:32px;text-shadow:0 0 15px gold}
-#emoji{font-size:65px;margin:15px}
-#message{font-size:22px;line-height:1.6;min-height:100px}
-button{
- background:linear-gradient(90deg,#fff0aa,#e9a32e);
- color:#35123b;border:0;border-radius:40px;
- padding:16px 24px;font-size:18px;font-weight:bold;
- margin:15px;cursor:pointer;
+
+h1 { color:#ffdb82;font-size:30px; }
+.hindi { font-size:28px;color:#ffe5ad; }
+
+button {
+ border:0;
+ border-radius:40px;
+ padding:17px 27px;
+ background:linear-gradient(100deg,#fff0ac,#e7a02a);
+ color:#35113a;
+ font-size:19px;
+ font-weight:bold;
+ cursor:pointer;
+ box-shadow:0 0 25px #ffbd50;
+ margin:20px 0;
 }
-#progress{width:90%;height:7px;background:#60416b;border-radius:10px;overflow:hidden}
-#bar{height:100%;width:0;background:#ffd36d}
-#timer{margin-top:12px;color:#ffdf9c}
-#replay{display:none}
+
+#videoBox { display:none;margin-top:20px; }
+
+video {
+ width:100%;
+ border:3px solid #e9bd65;
+ border-radius:17px;
+ box-shadow:0 0 25px #ffbf55;
+}
+
+#fireworks {
+ position:fixed;
+ inset:0;
+ width:100%;
+ height:100%;
+ pointer-events:none;
+ z-index:5;
+}
+
+.small { font-size:13px; }
 </style>
 </head>
+
 <body>
-<canvas id="sky"></canvas>
+
+<canvas id="fireworks"></canvas>
+
 <div class="card">
- <div id="emoji">🪔✨🪔</div>
- <h1 id="heading">A Special Diwali Surprise!</h1>
- <div id="message">
-  A beautiful celebration is waiting for you!<br>
-  आपके लिए एक खास दिवाली सरप्राइज़!
+ <div style="font-size:55px">🪔✨🪔</div>
+
+ <h1>A Special Diwali Surprise!</h1>
+
+ <div class="hindi">शुभ दीपावली</div>
+
+ <p>
+   Someone has prepared a magical surprise for you!<br>
+   आपके लिए एक खास दिवाली सरप्राइज़!
+ </p>
+
+ <button id="start" onclick="startSurprise()">
+   🪔 TAP HERE 🪔
+ </button>
+
+ <div id="videoBox">
+   <h2>🎆 HAPPY DIWALI! 🎆</h2>
+
+   <video id="myVideo" controls playsinline preload="metadata">
+     <source src="diwali.mp4" type="video/mp4">
+     Your browser cannot play this video.
+   </video>
+
+   <p class="small">
+     Wishing you happiness, prosperity and love! ❤️
+   </p>
  </div>
- <button id="start" onclick="startShow()">🪔 TAP HERE 🪔</button>
- <div id="progress"><div id="bar"></div></div>
- <div id="timer">Your 60-second celebration awaits!</div>
- <button id="replay" onclick="startShow()">↻ Watch Again</button>
 </div>
 
 <script>
-const scenes=[
- ["👑✨","A ROYAL CELEBRATION","May your home shine with happiness and love!"],
- ["🎆🎇","LET THE SKY SPARKLE!","May every light bring new hope and joy!"],
- ["🪔🌸","THE BEAUTY OF DIWALI","रोशनी, प्रेम और खुशियों का त्योहार!"],
- ["🌺🪔","TRADITION & TOGETHERNESS","May your family always stay blessed!"],
- ["✨💛","खुशियों की रोशनी","आपका हर सपना साकार हो!"],
- ["🎆👑","A GRAND DIWALI WISH","Wishing you success, peace and prosperity!"],
- ["🪔❤️","HAPPY DIWALI!","शुभ दीपावली! आपके जीवन में खुशियाँ बनी रहें!"]
-];
+const canvas = document.getElementById("fireworks");
+const ctx = canvas.getContext("2d");
 
-let running=false,begin=0,frame=null,audio=null;
-const canvas=document.getElementById("sky");
-const ctx=canvas.getContext("2d");
-let sparks=[];
+let particles = [];
+let audioContext;
 
-function resize(){
- canvas.width=innerWidth*devicePixelRatio;
- canvas.height=innerHeight*devicePixelRatio;
+function resize() {
+ canvas.width = innerWidth * devicePixelRatio;
+ canvas.height = innerHeight * devicePixelRatio;
  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
 }
-resize();window.addEventListener("resize",resize);
+resize();
+window.addEventListener("resize",resize);
 
-function burst(x,y){
- for(let i=0;i<65;i++){
-  let a=Math.random()*Math.PI*2,s=1+Math.random()*4;
-  sparks.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,
-   life:55,color:`hsl(${Math.random()*45+25},100%,65%)`});
+function burst(x,y) {
+ const colors=["#ffd700","#ff5cba","#48e5ff",
+               "#ff7733","#ffffff","#b77bff"];
+
+ for(let i=0;i<100;i++) {
+   const angle=Math.random()*Math.PI*2;
+   const speed=2+Math.random()*6;
+
+   particles.push({
+     x,y,
+     vx:Math.cos(angle)*speed,
+     vy:Math.sin(angle)*speed,
+     life:65,
+     color:colors[Math.floor(Math.random()*colors.length)],
+     size:1+Math.random()*3
+   });
  }
 }
-function draw(){
+
+function animate() {
  ctx.clearRect(0,0,innerWidth,innerHeight);
- if(running&&Math.random()<.07)
-  burst(Math.random()*innerWidth,Math.random()*innerHeight*.65);
- sparks.forEach(p=>{
-  ctx.globalAlpha=p.life/55;ctx.fillStyle=p.color;
-  ctx.beginPath();ctx.arc(p.x,p.y,2.5,0,7);ctx.fill();
-  p.x+=p.vx;p.y+=p.vy;p.vy+=.025;p.life--;
+
+ particles.forEach(p=>{
+   ctx.globalAlpha=p.life/65;
+   ctx.fillStyle=p.color;
+   ctx.beginPath();
+   ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+   ctx.fill();
+
+   p.x+=p.vx;
+   p.y+=p.vy;
+   p.vy+=0.045;
+   p.life--;
  });
- ctx.globalAlpha=1;sparks=sparks.filter(p=>p.life>0);
- requestAnimationFrame(draw);
-}
-draw();
 
-function chime(){
- if(!audio)return;
- const notes=[523,659,784,659,587,698,880,784];
- let n=0;
- const melody=setInterval(()=>{
-  if(!running){clearInterval(melody);return}
-  const osc=audio.createOscillator(),gain=audio.createGain();
-  osc.type="sine";osc.frequency.value=notes[n++%notes.length];
-  gain.gain.setValueAtTime(.0001,audio.currentTime);
-  gain.gain.exponentialRampToValueAtTime(.07,audio.currentTime+.03);
-  gain.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+.55);
-  osc.connect(gain);gain.connect(audio.destination);
-  osc.start();osc.stop(audio.currentTime+.6);
- },650);
+ ctx.globalAlpha=1;
+ particles=particles.filter(p=>p.life>0);
+ requestAnimationFrame(animate);
 }
+animate();
 
-function startShow(){
- if(running)return;
- running=true;begin=Date.now();
- document.getElementById("start").style.display="none";
- document.getElementById("replay").style.display="none";
- audio=audio||new (window.AudioContext||window.webkitAudioContext)();
- audio.resume();
- chime();
- function update(){
-  if(!running)return;
-  let elapsed=Math.floor((Date.now()-begin)/1000);
-  let second=Math.min(elapsed,60);
-  let scene=Math.min(Math.floor(second/9),6);
-  document.getElementById("emoji").textContent=scenes[scene][0];
-  document.getElementById("heading").textContent=scenes[scene][1];
-  document.getElementById("message").textContent=scenes[scene][2];
-  document.getElementById("bar").style.width=(second/60*100)+"%";
-  document.getElementById("timer").textContent=
-   second+" / 60 seconds";
-  if(second>=60){
-   running=false;
-   document.getElementById("heading").textContent="✨ शुभ दीपावली ✨";
-   document.getElementById("message").textContent=
-    "Happy Diwali! May your life always shine! ❤️";
-   document.getElementById("replay").style.display="inline-block";
-   document.getElementById("timer").textContent="Celebration complete!";
-   return;
-  }
-  setTimeout(update,250);
+// Create original electronic cracker-like pop sounds
+function popSound() {
+ if(!audioContext) return;
+
+ const now=audioContext.currentTime;
+
+ // Short noise burst
+ const length=Math.floor(audioContext.sampleRate*.12);
+ const buffer=audioContext.createBuffer(
+   1,length,audioContext.sampleRate
+ );
+ const data=buffer.getChannelData(0);
+
+ for(let i=0;i<length;i++) {
+   data[i]=(Math.random()*2-1)*Math.pow(1-i/length,3);
  }
- update();
+
+ const noise=audioContext.createBufferSource();
+ noise.buffer=buffer;
+
+ const gain=audioContext.createGain();
+ gain.gain.setValueAtTime(.65,now);
+ gain.gain.exponentialRampToValueAtTime(.001,now+.12);
+
+ noise.connect(gain);
+ gain.connect(audioContext.destination);
+ noise.start(now);
+
+ // Low boom
+ const osc=audioContext.createOscillator();
+ const boom=audioContext.createGain();
+
+ osc.type="sine";
+ osc.frequency.setValueAtTime(110,now);
+ osc.frequency.exponentialRampToValueAtTime(35,now+.16);
+
+ boom.gain.setValueAtTime(.35,now);
+ boom.gain.exponentialRampToValueAtTime(.001,now+.17);
+
+ osc.connect(boom);
+ boom.connect(audioContext.destination);
+ osc.start(now);
+ osc.stop(now+.18);
+}
+
+let started=false;
+
+async function startSurprise() {
+ if(started) return;
+ started=true;
+
+ document.getElementById("start").style.display="none";
+
+ // Start audio after the visitor's tap
+ const AudioCtx=window.AudioContext||window.webkitAudioContext;
+ if(AudioCtx) {
+   audioContext=new AudioCtx();
+   await audioContext.resume();
+ }
+
+ // Show video
+ const box=document.getElementById("videoBox");
+ box.style.display="block";
+
+ // Cluster of fireworks and pop sounds
+ for(let i=0;i<18;i++) {
+   setTimeout(()=>{
+     const x=Math.random()*innerWidth;
+     const y=100+Math.random()*innerHeight*.55;
+     burst(x,y);
+     popSound();
+   },i*180);
+ }
+
+ // Start the visitor's own video
+ const video=document.getElementById("myVideo");
+ video.play().catch(()=>{
+   video.controls=true;
+   alert("Tap the video play button to start it.");
+ });
+
+ box.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 </script>
+
 </body>
 </html>
