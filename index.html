@@ -1,0 +1,72 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diwali Surprise 🪔</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh;
+  display: grid; place-items: center;
+  text-align: center; color: #fff2cf;
+  font-family: Georgia, serif;
+  background: radial-gradient(circle at top,
+    #762b70, #261039 60%, #10091e);
+  overflow-x: hidden;
+}
+.card {
+  width: 90%; max-width: 480px;
+  padding: 35px 22px;
+  border: 2px solid #e8bb65;
+  border-radius: 25px;
+  background: #29113dcc;
+  box-shadow: 0 0 40px #e6a83b55;
+}
+h1 { color: #ffd879; font-size: 36px; }
+.hindi { font-size: 27px; color: #ffda8b; }
+.diya { font-size: 50px; }
+p { line-height: 1.7; }
+button {
+  margin: 20px 0;
+  padding: 17px 28px;
+  border: none; border-radius: 40px;
+  background: linear-gradient(90deg,#ffe8a0,#e9a632);
+  color: #35133c; font-size: 19px;
+  font-weight: bold; cursor: pointer;
+}
+#surprise { display: none; }
+video { width: 100%; border-radius: 15px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="diya">🪔✨🪔</div>
+  <h1>A Special Diwali Surprise!</h1>
+  <div class="hindi">शुभ दीपावली</div>
+  <p>
+    May your life shine with happiness,
+    love and prosperity!<br>
+    आपका जीवन खुशियों से जगमगाए!
+  </p>
+
+  <button onclick="showSurprise()">
+    🪔 TAP HERE 🪔
+  </button>
+
+  <div id="surprise">
+    <h2>🎆 Happy Diwali! 🎆</h2>
+    <video controls playsinline>
+      <source src="diwali.mp4" type="video/mp4">
+    </video>
+  </div>
+</div>
+
+<script>
+function showSurprise() {
+  document.getElementById("surprise").style.display = "block";
+}
+</script>
+</body>
+</html>
