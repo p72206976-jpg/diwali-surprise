@@ -7,7 +7,9 @@
 <title>Diwali Surprise ✨</title>
 
 <style>
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
@@ -34,9 +36,12 @@ h1 {
   text-shadow: 0 0 15px orange;
 }
 
-p { font-size: 18px; line-height: 1.6; }
+p {
+  font-size: 18px;
+  line-height: 1.6;
+}
 
-#startButton, #replay {
+button {
   border: 2px solid #ffe28a;
   background: linear-gradient(45deg, #ff9d00, #e83e00);
   color: white;
@@ -50,16 +55,21 @@ p { font-size: 18px; line-height: 1.6; }
 }
 
 video {
+  display: block;
   width: 100%;
   max-width: 650px;
   max-height: 70vh;
+  margin: auto;
   border: 3px solid gold;
   border-radius: 15px;
   box-shadow: 0 0 25px orange;
   background: black;
 }
 
-#videoArea { display: none; width: 100%; }
+#videoArea {
+  display: none;
+  width: 100%;
+}
 
 #fireworks {
   position: fixed;
@@ -91,6 +101,13 @@ video {
   font-size: 24px;
   display: none;
   margin-top: 20px;
+  line-height: 1.5;
+}
+
+#videoError {
+  display: none;
+  color: #ffd76a;
+  margin: 15px;
 }
 </style>
 </head>
@@ -119,16 +136,24 @@ video {
   </div>
 
   <div id="videoArea">
+
     <h1>🎆 Happy Diwali! 🎆</h1>
 
     <video id="diwaliVideo"
       controls
       playsinline
-      preload="metadata">
-      <source src="YouCut_20261108_140200697.mp4"
+      webkit-playsinline
+      preload="auto">
+      <source
+        src="YouCut_20261108_140200697.mp4"
         type="video/mp4">
       Your browser cannot play this video.
     </video>
+
+    <p id="videoError">
+      Sorry! Video could not load.
+      Please refresh and try again.
+    </p>
 
     <div id="progress">
       <div id="bar"></div>
@@ -136,35 +161,44 @@ video {
 
     <div id="finalMessage">
       🪔 Wishing You and Your Family a Very Happy & Prosperous Diwali! 🪔
+      <p>May Your Life Shine with Happiness, Peace and Prosperity! ❤️</p>
     </div>
 
     <button id="replay" onclick="replayVideo()">
       ↻ Play Again
     </button>
+
   </div>
 
 </div>
 
 <script>
+
 const video = document.getElementById("diwaliVideo");
 const canvas = document.getElementById("fireworks");
 const ctx = canvas.getContext("2d");
 
 let particles = [];
 let audioContext;
+let fireworksTimer;
 
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 }
+
 resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
+
+// FIREWORK POP SOUND
 
 function popSound() {
   try {
     if (!audioContext) {
-      audioContext = new (window.AudioContext ||
-        window.webkitAudioContext)();
+      audioContext = new (
+        window.AudioContext ||
+        window.webkitAudioContext
+      )();
     }
 
     if (audioContext.state === "suspended") {
@@ -175,18 +209,25 @@ function popSound() {
     const gain = audioContext.createGain();
 
     oscillator.type = "sawtooth";
+
     oscillator.frequency.setValueAtTime(
       500 + Math.random() * 700,
       audioContext.currentTime
     );
 
     oscillator.frequency.exponentialRampToValueAtTime(
-      80, audioContext.currentTime + 0.18
+      80,
+      audioContext.currentTime + 0.18
     );
 
-    gain.gain.setValueAtTime(0.16, audioContext.currentTime);
+    gain.gain.setValueAtTime(
+      0.16,
+      audioContext.currentTime
+    );
+
     gain.gain.exponentialRampToValueAtTime(
-      0.001, audioContext.currentTime + 0.2
+      0.001,
+      audioContext.currentTime + 0.2
     );
 
     oscillator.connect(gain);
@@ -194,35 +235,60 @@ function popSound() {
 
     oscillator.start();
     oscillator.stop(audioContext.currentTime + 0.2);
-  } catch (e) {}
+
+  } catch (e) {
+    console.log("Sound unavailable", e);
+  }
 }
 
+// FIREWORK EXPLOSIONS
+
 function burst() {
+
   const x = Math.random() * canvas.width;
   const y = Math.random() * canvas.height * 0.65;
-  const colors = ["#ffdf55", "#ff6b00", "#ff3d9a",
-                  "#ffffff", "#62eaff", "#a879ff"];
+
+  const colors = [
+    "#ffdf55",
+    "#ff6b00",
+    "#ff3d9a",
+    "#ffffff",
+    "#62eaff",
+    "#a879ff"
+  ];
 
   for (let i = 0; i < 65; i++) {
+
     const angle = Math.random() * Math.PI * 2;
     const speed = Math.random() * 5 + 1;
 
     particles.push({
-      x, y,
+      x: x,
+      y: y,
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed,
       life: 90,
-      color: colors[Math.floor(Math.random() * colors.length)]
+      color: colors[
+        Math.floor(Math.random() * colors.length)
+      ]
     });
   }
 
   popSound();
 }
 
+// ANIMATION
+
 function animate() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.clearRect(
+    0, 0,
+    canvas.width,
+    canvas.height
+  );
 
   particles.forEach((p, index) => {
+
     p.x += p.vx;
     p.y += p.vy;
     p.vy += 0.035;
@@ -230,25 +296,40 @@ function animate() {
 
     ctx.globalAlpha = Math.max(0, p.life / 90);
     ctx.fillStyle = p.color;
+
     ctx.beginPath();
     ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
     ctx.fill();
 
-    if (p.life <= 0) particles.splice(index, 1);
+    if (p.life <= 0) {
+      particles.splice(index, 1);
+    }
+
   });
 
   ctx.globalAlpha = 1;
+
   requestAnimationFrame(animate);
 }
+
 animate();
 
-let fireworksTimer;
+// FIREWORK CONTROL
 
 function startFireworks() {
+
+  stopFireworks();
+
   burst();
+
   fireworksTimer = setInterval(() => {
+
     burst();
-    if (Math.random() > 0.5) burst();
+
+    if (Math.random() > 0.5) {
+      burst();
+    }
+
   }, 1000);
 }
 
@@ -256,37 +337,88 @@ function stopFireworks() {
   clearInterval(fireworksTimer);
 }
 
+// START SURPRISE
+
 function startSurprise() {
+
   document.getElementById("welcome").style.display = "none";
+
   document.getElementById("videoArea").style.display = "block";
+
+  document.getElementById("videoError").style.display = "none";
+
+  document.getElementById("finalMessage").style.display = "none";
+
+  startFireworks();
+
+  // Start playback directly from the button tap.
+  video.currentTime = 0;
+
+  const playPromise = video.play();
+
+  if (playPromise !== undefined) {
+    playPromise.catch((error) => {
+
+      console.log("Playback issue:", error);
+
+      document.getElementById("videoError").style.display = "block";
+
+    });
+  }
+}
+
+// REPLAY VIDEO
+
+function replayVideo() {
+
+  document.getElementById("finalMessage").style.display = "none";
+
+  document.getElementById("videoError").style.display = "none";
 
   startFireworks();
 
   video.currentTime = 0;
-  video.play().catch(() => {
-    alert("Tap the video Play button to start your Diwali celebration!");
+
+  video.play().catch((error) => {
+    document.getElementById("videoError").style.display = "block";
   });
 }
 
-function replayVideo() {
-  document.getElementById("finalMessage").style.display = "none";
-  video.currentTime = 0;
-  video.play().catch(() => {});
-  startFireworks();
-}
+// VIDEO PROGRESS
 
 video.addEventListener("timeupdate", () => {
-  if (video.duration) {
+
+  if (video.duration && isFinite(video.duration)) {
+
     document.getElementById("bar").style.width =
       (video.currentTime / video.duration * 100) + "%";
+
   }
+
 });
 
+// VIDEO FINISHED
+
 video.addEventListener("ended", () => {
+
   stopFireworks();
+
   document.getElementById("finalMessage").style.display = "block";
+
   burst();
+
 });
+
+// VIDEO ERROR
+
+video.addEventListener("error", () => {
+
+  document.getElementById("videoError").style.display = "block";
+
+  console.log("Video error:", video.error);
+
+});
+
 </script>
 
 </body>
