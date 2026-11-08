@@ -3,118 +3,146 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Royal Diwali Surprise</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>60 Second Diwali Surprise</title>
 <style>
 *{box-sizing:border-box}
 body{
- margin:0;min-height:100vh;overflow-x:hidden;
- display:flex;align-items:center;justify-content:center;
- text-align:center;color:#fff1cf;
- font-family:Georgia,serif;
- background:radial-gradient(circle at top,#702b71,#29103e 55%,#09051b);
+ margin:0;min-height:100vh;background:#170923;
+ color:#fff0ca;font-family:Georgia,serif;
+ display:grid;place-items:center;overflow:hidden;
 }
+#sky{position:fixed;inset:0;width:100%;height:100%}
 .card{
- width:92%;max-width:480px;padding:32px 20px;
- border:2px solid #e8bd64;border-radius:25px;
- background:#271039df;
- box-shadow:0 0 45px #ffc04a55;
+ position:relative;z-index:2;width:92%;max-width:480px;
+ min-height:480px;padding:30px 18px;
+ display:flex;flex-direction:column;justify-content:center;
+ align-items:center;text-align:center;
+ background:linear-gradient(145deg,#41134eeb,#180c2aee);
+ border:2px solid #e9bd65;border-radius:25px;
+ box-shadow:0 0 45px #f9b74355;
 }
-h1{font-size:35px;color:#ffdb83;text-shadow:0 0 15px #ffad35}
-.hindi{font-size:28px;color:#ffe3a4}
-.lamps{font-size:48px;animation:glow 1.5s infinite alternate}
-@keyframes glow{to{filter:drop-shadow(0 0 18px gold);transform:scale(1.08)}}
+h1{color:#ffdc83;font-size:32px;text-shadow:0 0 15px gold}
+#emoji{font-size:65px;margin:15px}
+#message{font-size:22px;line-height:1.6;min-height:100px}
 button{
- padding:17px 28px;border:0;border-radius:40px;
- background:linear-gradient(100deg,#fff0ac,#e9a12d);
- color:#34133c;font-weight:bold;font-size:19px;
- box-shadow:0 0 25px #ffc14d;cursor:pointer;
+ background:linear-gradient(90deg,#fff0aa,#e9a32e);
+ color:#35123b;border:0;border-radius:40px;
+ padding:16px 24px;font-size:18px;font-weight:bold;
+ margin:15px;cursor:pointer;
 }
-#surprise{display:none;animation:appear 2s ease}
-@keyframes appear{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
-#wishes{font-size:19px;line-height:1.8}
-#sky{position:fixed;inset:0;pointer-events:none;z-index:5}
-.star{position:fixed;animation:fall 4s linear infinite;pointer-events:none}
-@keyframes fall{from{transform:translateY(-10vh) rotate(0);opacity:1}to{transform:translateY(110vh) rotate(360deg);opacity:0}}
+#progress{width:90%;height:7px;background:#60416b;border-radius:10px;overflow:hidden}
+#bar{height:100%;width:0;background:#ffd36d}
+#timer{margin-top:12px;color:#ffdf9c}
+#replay{display:none}
 </style>
 </head>
 <body>
 <canvas id="sky"></canvas>
-<main class="card">
- <div class="lamps">🪔 ✨ 🪔</div>
- <h1>A Special Diwali Surprise!</h1>
- <div class="hindi">शुभ दीपावली</div>
- <p>Someone has a beautiful surprise for you!</p>
- <button onclick="celebrate()">🪔 TAP HERE 🪔</button>
- <div id="surprise">
-  <h1>🎆 HAPPY DIWALI! 🎆</h1>
-  <div class="lamps">🪔 🌸 🪔</div>
-  <div id="wishes">
-   May your life shine brighter than a thousand lights!<br><br>
-   आपका जीवन खुशियों और समृद्धि से जगमगाए!<br><br>
-   Wishing you love, laughter and prosperity! ❤️
-  </div>
-  <h1>✨ शुभ दीपावली ✨</h1>
-  <div style="font-size:35px">🎇 🎆 🎇</div>
+<div class="card">
+ <div id="emoji">🪔✨🪔</div>
+ <h1 id="heading">A Special Diwali Surprise!</h1>
+ <div id="message">
+  A beautiful celebration is waiting for you!<br>
+  आपके लिए एक खास दिवाली सरप्राइज़!
  </div>
-</main>
+ <button id="start" onclick="startShow()">🪔 TAP HERE 🪔</button>
+ <div id="progress"><div id="bar"></div></div>
+ <div id="timer">Your 60-second celebration awaits!</div>
+ <button id="replay" onclick="startShow()">↻ Watch Again</button>
+</div>
+
 <script>
+const scenes=[
+ ["👑✨","A ROYAL CELEBRATION","May your home shine with happiness and love!"],
+ ["🎆🎇","LET THE SKY SPARKLE!","May every light bring new hope and joy!"],
+ ["🪔🌸","THE BEAUTY OF DIWALI","रोशनी, प्रेम और खुशियों का त्योहार!"],
+ ["🌺🪔","TRADITION & TOGETHERNESS","May your family always stay blessed!"],
+ ["✨💛","खुशियों की रोशनी","आपका हर सपना साकार हो!"],
+ ["🎆👑","A GRAND DIWALI WISH","Wishing you success, peace and prosperity!"],
+ ["🪔❤️","HAPPY DIWALI!","शुभ दीपावली! आपके जीवन में खुशियाँ बनी रहें!"]
+];
+
+let running=false,begin=0,frame=null,audio=null;
 const canvas=document.getElementById("sky");
 const ctx=canvas.getContext("2d");
-let fireworks=[];
+let sparks=[];
+
 function resize(){
- canvas.width=innerWidth;
- canvas.height=innerHeight;
+ canvas.width=innerWidth*devicePixelRatio;
+ canvas.height=innerHeight*devicePixelRatio;
+ ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
 }
-resize();
-window.addEventListener("resize",resize);
+resize();window.addEventListener("resize",resize);
 
 function burst(x,y){
  for(let i=0;i<65;i++){
-  let a=Math.random()*Math.PI*2;
-  let speed=Math.random()*4+1;
-  fireworks.push({
-   x,y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,
-   life:65,color:`hsl(${Math.random()*360},100%,65%)`
-  });
+  let a=Math.random()*Math.PI*2,s=1+Math.random()*4;
+  sparks.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,
+   life:55,color:`hsl(${Math.random()*45+25},100%,65%)`});
  }
 }
-function animate(){
- ctx.clearRect(0,0,canvas.width,canvas.height);
- fireworks.forEach((p)=>{
-  ctx.fillStyle=p.color;
-  ctx.globalAlpha=p.life/65;
-  ctx.beginPath();
-  ctx.arc(p.x,p.y,3,0,Math.PI*2);
-  ctx.fill();
-  p.x+=p.vx;p.y+=p.vy;
-  p.vy+=0.025;p.life--;
+function draw(){
+ ctx.clearRect(0,0,innerWidth,innerHeight);
+ if(running&&Math.random()<.07)
+  burst(Math.random()*innerWidth,Math.random()*innerHeight*.65);
+ sparks.forEach(p=>{
+  ctx.globalAlpha=p.life/55;ctx.fillStyle=p.color;
+  ctx.beginPath();ctx.arc(p.x,p.y,2.5,0,7);ctx.fill();
+  p.x+=p.vx;p.y+=p.vy;p.vy+=.025;p.life--;
  });
- ctx.globalAlpha=1;
- fireworks=fireworks.filter(p=>p.life>0);
- requestAnimationFrame(animate);
+ ctx.globalAlpha=1;sparks=sparks.filter(p=>p.life>0);
+ requestAnimationFrame(draw);
 }
-animate();
+draw();
 
-let party=false;
-function celebrate(){
- document.getElementById("surprise").style.display="block";
- if(party)return;
- party=true;
- for(let i=0;i<20;i++){
-  setTimeout(()=>{
-   burst(Math.random()*canvas.width,
-         Math.random()*canvas.height*.65);
-  },i*350);
+function chime(){
+ if(!audio)return;
+ const notes=[523,659,784,659,587,698,880,784];
+ let n=0;
+ const melody=setInterval(()=>{
+  if(!running){clearInterval(melody);return}
+  const osc=audio.createOscillator(),gain=audio.createGain();
+  osc.type="sine";osc.frequency.value=notes[n++%notes.length];
+  gain.gain.setValueAtTime(.0001,audio.currentTime);
+  gain.gain.exponentialRampToValueAtTime(.07,audio.currentTime+.03);
+  gain.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+.55);
+  osc.connect(gain);gain.connect(audio.destination);
+  osc.start();osc.stop(audio.currentTime+.6);
+ },650);
+}
+
+function startShow(){
+ if(running)return;
+ running=true;begin=Date.now();
+ document.getElementById("start").style.display="none";
+ document.getElementById("replay").style.display="none";
+ audio=audio||new (window.AudioContext||window.webkitAudioContext)();
+ audio.resume();
+ chime();
+ function update(){
+  if(!running)return;
+  let elapsed=Math.floor((Date.now()-begin)/1000);
+  let second=Math.min(elapsed,60);
+  let scene=Math.min(Math.floor(second/9),6);
+  document.getElementById("emoji").textContent=scenes[scene][0];
+  document.getElementById("heading").textContent=scenes[scene][1];
+  document.getElementById("message").textContent=scenes[scene][2];
+  document.getElementById("bar").style.width=(second/60*100)+"%";
+  document.getElementById("timer").textContent=
+   second+" / 60 seconds";
+  if(second>=60){
+   running=false;
+   document.getElementById("heading").textContent="✨ शुभ दीपावली ✨";
+   document.getElementById("message").textContent=
+    "Happy Diwali! May your life always shine! ❤️";
+   document.getElementById("replay").style.display="inline-block";
+   document.getElementById("timer").textContent="Celebration complete!";
+   return;
+  }
+  setTimeout(update,250);
  }
- for(let i=0;i<35;i++){
-  let s=document.createElement("div");
-  s.className="star";
-  s.textContent=["✨","🌸","⭐","🪔"][i%4];
-  s.style.left=Math.random()*100+"%";
-  s.style.animationDelay=Math.random()*3+"s";
-  document.body.appendChild(s);
- }
+ update();
 }
 </script>
 </body>
